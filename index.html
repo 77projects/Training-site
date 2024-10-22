@@ -1,135 +1,70 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Training Reminder App</title>
+  <title>The Mind Palace: Explore the Mysteries of Mental Manipulation</title>
   <style>
     body {
-      font-family: 'Open Sans', sans-serif;
-      background-image: url('https://i.redd.it/wj05u6bwpu6b1.gif'); /* Replace with your desired trippy background image */
-      background-size: cover;
-      background-position: center;
+      font-family: Arial, sans-serif;
+      background-color: #111;
       color: #fff;
       text-align: center;
     }
 
-    .container {
-      margin: 20px;
-      padding: 20px;
-      background-color: rgba(0, 0, 0, 0.7);
-      border-radius: 10px;
-    }
-
     h1 {
-      font-size: 36px;
-      margin-bottom: 20px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      margin-top: 40px;
     }
 
-    input {
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: rgba(255, 255, 255, 0.8);
-      color: #333;
+    .video-container {
+      width: 800px;
+      margin: 0 auto;
     }
 
-    button {
-      padding: 10px 20px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+    .video-selection {
+      height: 300px; /* Adjust the height as needed */
+      overflow-y: scroll;
+      margin-top: 50px; /* Adjust the top margin */
+      border-radius: 10px; /* Adjust the border radius */
+      background-color: #222; /* Add a background color for the box */
     }
 
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-
-    li {
-      margin: 10px 0;
+    .video-item {
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Training Reminder</h1>
-    <label for="training-goals">Enter your training goals:</label>
-    <input type="text" id="training-goals" placeholder="e.g., practice persuasion techniques, improve communication skills">
-    <br>
-    <label for="reminder-interval">Reminder Interval (minutes):</label>
-    <input type="number" id="reminder-interval" value="30" min="1">
-    <br>
-    <button id="generate-reminders">Generate Reminders</button>
-    <ul id="reminder-list"></ul>
+  <h1>AI Generated Mind Control Tracks</h1>
+  <div class="video-container">
+    <div class="video-selection">
+      <div class="video-item">
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/XjEKyJ6-Qe0?si=4a-QTTnHOvfRV-t5" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
+      <div class="video-item">
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/q2l44GMjK2U?si=e4lZqb1YCOE2qw9r" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
+      <div class="video-item">
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/zNHrp420Mg8?si=WWMSMiMPJxbmoPHy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+      </div>
+    </div>
   </div>
 
   <script>
-    const trainingGoalsInput = document.getElementById('training-goals');
-    const reminderIntervalInput = document.getElementById('reminder-interval');
-    const generateRemindersButton = document.getElementById('generate-reminders');
-    const reminderList = document.getElementById('reminder-list');
+    // Get references to the iframes
+    const iframes = document.querySelectorAll('iframe');
 
-    let reminderInterval;
+    // Function to play/pause a video
+    function togglePlayPause(index) {
+      iframes[index].paused ? iframes[index].play() : iframes[index].pause();
+    }
 
-    const generateReminders = () => {
-      const trainingGoals = trainingGoalsInput.value;
-      const intervalMinutes = parseInt(reminderIntervalInput.value);
-
-      if (trainingGoals.trim() === '') {
-        alert('Please enter your training goals.');
-        return;
-      }
-
-      if (intervalMinutes <= 0) {
-        alert('Reminder interval must be a positive number.');
-        return;
-      }
-
-      // Generate reminders based on the entered training goals (you can implement your own logic here)
-      const reminders = trainingGoals.split(',').map(goal => `Remember to practice ${goal}`);
-
-      reminderList.innerHTML = '';
-      reminders.forEach(reminder => {
-        const listItem = document.createElement('li');
-        listItem.textContent = reminder;
-        reminderList.appendChild(listItem);
-      });
-
-      // Request notification permission
-      if ('Notification' in window) {
-        Notification.requestPermission().then(function (permission) {
-          if (permission === 'granted') {
-            // Schedule reminders
-            reminderInterval = setInterval(() => {
-              sendNotification(getRandomReminder(reminders));
-            }, intervalMinutes * 60 * 1000); // Convert minutes to milliseconds
-          } else {
-            alert('Notification permission denied. Please allow notifications to receive reminders.');
-          }
-        });
-      } else {
-        alert('Your browser doesn\'t support notifications.');
-      }
-    };
-
-    const sendNotification = (message) => {
-      if ('Notification' in window) {
-        new Notification('Training Reminder', {
-          body: message
-        });
-      } else {
-        alert(message);
-      }
-    };
-
-    const getRandomReminder = (reminders) => {
-      const randomIndex = Math.floor(Math.random() * reminders.length);
-      return reminders[randomIndex];
-    };
-
-    generateRemindersButton.addEventListener('click', generateReminders);
+    // Event listeners for each iframe
+    for (let i = 0; i < iframes.length; i++) {
+      iframes[i].addEventListener('click', () => togglePlayPause(i));
+    }
   </script>
+
+  <footer>
+    <p>© The Mind Palace 2024</p>
+  </footer>
 </body>
 </html>
