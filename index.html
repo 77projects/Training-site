@@ -1,12 +1,60 @@
 <!DOCTYPE html>
-<html>
-  <body style="background-color:black;">
-    <script>
-      let isOn = false;
-      setInterval(() => {
-        document.body.style.backgroundColor = isOn ? 'black' : 'white';
-        isOn = !isOn;
-      }, 145); // ~6.9 Hz
-    </script>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Theta Loading Screen</title>
+  <style>
+    body {
+      background-color: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .circle {
+      width: 40px;
+      height: 40px;
+      margin: 10px;
+      border-radius: 50%;
+      background-color: white;
+      opacity: 0;
+      transition: opacity 0.05s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div class="circle" id="c1"></div>
+    <div class="circle" id="c2"></div>
+    <div class="circle" id="c3"></div>
+    <div class="circle" id="c4"></div>
+  </div>
+
+  <script>
+    const frequencyHz = 6.9;            // target frequency
+    const intervalMs = 1000 / frequencyHz; // ~145ms
+    const delayBetween = 50;            // delay between each circle pulse
+
+    const circles = [
+      document.getElementById('c1'),
+      document.getElementById('c2'),
+      document.getElementById('c3'),
+      document.getElementById('c4'),
+    ];
+
+    function flashCircle(circle, delay) {
+      setTimeout(() => {
+        let on = false;
+        setInterval(() => {
+          circle.style.opacity = on ? '0' : '1';
+          on = !on;
+        }, intervalMs);
+      }, delay);
+    }
+
+    circles.forEach((circle, i) => {
+      flashCircle(circle, i * delayBetween);
+    });
+  </script>
+</body>
 </html>
