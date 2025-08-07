@@ -2,69 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Theta Loading Screen</title>
+  <title>Theta Entrainment Video</title>
   <style>
-    body {
+    html, body {
       margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
       background-color: black;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       transition: filter 0.05s ease-in-out;
     }
-    .circle {
-      width: 40px;
-      height: 40px;
-      margin: 10px;
-      border-radius: 50%;
-      background-color: white;
-      opacity: 0;
-      transition: opacity 0.05s ease-in-out;
+
+    .video-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none; /* disables interaction */
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-color: rgba(0, 0, 0, 0); /* transparent overlay */
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <div id="container">
-    <div class="circle" id="c1"></div>
-    <div class="circle" id="c2"></div>
-    <div class="circle" id="c3"></div>
-    <div class="circle" id="c4"></div>
+
+  <div class="video-container">
+    <iframe
+      src="https://www.youtube.com/embed/5qap5aO4i9A?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=5qap5aO4i9A"
+      allow="autoplay; encrypted-media"
+      allowfullscreen>
+    </iframe>
   </div>
+
+  <div class="overlay"></div>
 
   <script>
     const frequencyHz = 6.9;
     const intervalMs = 1000 / frequencyHz;
-    const delayBetween = 50;
 
-    const circles = [
-      document.getElementById('c1'),
-      document.getElementById('c2'),
-      document.getElementById('c3'),
-      document.getElementById('c4'),
-    ];
-
-    function flashCircle(circle, delay) {
-      setTimeout(() => {
-        let on = false;
-        setInterval(() => {
-          circle.style.opacity = on ? '0' : '1';
-          on = !on;
-        }, intervalMs);
-      }, delay);
-    }
-
-    // Start circle flashing
-    circles.forEach((circle, i) => {
-      flashCircle(circle, i * delayBetween);
-    });
-
-    // Page-wide brightness modulation
     let brightnessHigh = true;
     setInterval(() => {
-      document.body.style.filter = brightnessHigh ? 'brightness(1.2)' : 'brightness(0.8)';
+      document.body.style.filter = brightnessHigh ? 'brightness(1.15)' : 'brightness(0.85)';
       brightnessHigh = !brightnessHigh;
     }, intervalMs);
   </script>
+
 </body>
 </html>
