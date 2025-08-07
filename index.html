@@ -32,7 +32,7 @@
 
   <div class="video-container">
     <iframe 
-      src="https://www.youtube.com/embed/2OEL4P1Rz04?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0"
+      src="https://www.youtube.com/embed/2OEL4P1Rz04?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0"
       allow="autoplay; encrypted-media"
       allowfullscreen>
     </iframe>
@@ -42,7 +42,6 @@
     const frequencyHz = 6.9;
     const intervalMs = 1000 / frequencyHz;
 
-    // Subtle brightness pulse between 0.98 and 1.02
     let bright = true;
     setInterval(() => {
       document.body.style.filter = bright ? 'brightness(1.02)' : 'brightness(0.96)';
