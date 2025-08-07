@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Theta Entrainment Video</title>
+  <title>Theta Entrainment</title>
   <style>
     html, body {
       margin: 0;
@@ -19,7 +19,6 @@
       width: 100vw;
       height: 100vh;
       z-index: 0;
-      pointer-events: none; /* disables interaction */
     }
 
     iframe {
@@ -27,38 +26,28 @@
       height: 100%;
       border: none;
     }
-
-    .overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      background-color: rgba(0, 0, 0, 0); /* transparent overlay */
-      pointer-events: none;
-    }
   </style>
 </head>
 <body>
 
   <div class="video-container">
-    <iframe
-      src="https://youtu.be/c0rae6h3lXU?si=179OpYs8YPyoQvLO"
+    <iframe 
+      src="https://www.youtube.com/embed/5qap5aO4i9A?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=5qap5aO4i9A"
       allow="autoplay; encrypted-media"
-      allowfullscreen>
+      allowfullscreen
+      frameborder="0">
     </iframe>
   </div>
-
-  <div class="overlay"></div>
 
   <script>
     const frequencyHz = 6.9;
     const intervalMs = 1000 / frequencyHz;
 
-    let brightnessHigh = true;
+    // Subtle brightness pulse between 0.98 and 1.02
+    let bright = true;
     setInterval(() => {
-      document.body.style.filter = brightnessHigh ? 'brightness(1.15)' : 'brightness(0.85)';
-      brightnessHigh = !brightnessHigh;
+      document.body.style.filter = bright ? 'brightness(1.02)' : 'brightness(0.98)';
+      bright = !bright;
     }, intervalMs);
   </script>
 
