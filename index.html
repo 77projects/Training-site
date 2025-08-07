@@ -5,11 +5,13 @@
   <title>Theta Loading Screen</title>
   <style>
     body {
+      margin: 0;
       background-color: black;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      transition: filter 0.05s ease-in-out;
     }
     .circle {
       width: 40px;
@@ -31,9 +33,9 @@
   </div>
 
   <script>
-    const frequencyHz = 6.9;            // target frequency
-    const intervalMs = 1000 / frequencyHz; // ~145ms
-    const delayBetween = 50;            // delay between each circle pulse
+    const frequencyHz = 6.9;
+    const intervalMs = 1000 / frequencyHz;
+    const delayBetween = 50;
 
     const circles = [
       document.getElementById('c1'),
@@ -52,9 +54,17 @@
       }, delay);
     }
 
+    // Start circle flashing
     circles.forEach((circle, i) => {
       flashCircle(circle, i * delayBetween);
     });
+
+    // Page-wide brightness modulation
+    let brightnessHigh = true;
+    setInterval(() => {
+      document.body.style.filter = brightnessHigh ? 'brightness(1.2)' : 'brightness(0.8)';
+      brightnessHigh = !brightnessHigh;
+    }, intervalMs);
   </script>
 </body>
 </html>
