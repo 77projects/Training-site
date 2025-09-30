@@ -33,7 +33,7 @@
 
   <div class="video-container">
     <iframe 
-      src="https://www.youtube.com/embed/XXmYe12a-UY?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=XXmYe12a-UY"
+      src="https://www.youtube.com/embed/nE0T0X1L-XQ?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=nE0T0X1L-XQ"
       allow="autoplay; encrypted-media"
       allowfullscreen>
     </iframe>
@@ -41,10 +41,10 @@
 
   <script>
     // --- Entrainment Parameters ---
-    const frequencyHz = 6.9;
+    const frequencyHz = 6.9; // Theta frequency for trance induction
     const flickerIntervalMs = 1000 / frequencyHz; 
     
-    // --- Timing and Brightness Constants (8s flicker, 6s bright hold) ---
+    // --- Timing Constants (8s flicker, 6s bright hold) ---
     const flickerDurationMs = 8000;      // 8 seconds of flicker
     
     // --- Brightness Levels ---
@@ -73,7 +73,7 @@
     }
 
     /**
-     * Executes the 'stop and brighten' phase (6 seconds total).
+     * Executes the 'stop and brighten' phase (6 seconds total fractionation).
      */
     function runFractionationCycle() {
       // 1. Stop the rapid flicker
@@ -94,7 +94,7 @@
         // Wait for the fade-down (2 seconds) before restarting the loop
         fractionationTimeout = setTimeout(loopControl, 2000); 
 
-      }, 4000); // 4 seconds: 2s fade up + 2s pure hold time. Total bright hold is 6s.
+      }, 4000); // 4 seconds (2s fade up + 2s pure hold). Total bright phase is 6s.
     }
     
     /**
