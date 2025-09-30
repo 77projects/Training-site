@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Theta Entrainment</title>
+  <title>Theta Entrainment with Fractionation</title>
   <style>
     html, body {
       margin: 0;
@@ -10,7 +10,8 @@
       height: 100%;
       overflow: hidden;
       background-color: black;
-      transition: filter 0.05s ease-in-out;
+      /* Smooth transition for the *slow* changes during fractionation */
+      transition: filter 1s ease-in-out; 
     }
 
     .video-container {
@@ -32,21 +33,89 @@
 
   <div class="video-container">
     <iframe 
-      src="https://www.youtube.com/embed/2OEL4P1Rz04?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0"
+      src="https://www.youtube.com/embed/T8oT_X9_Pq8?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=T8oT_X9_Pq8"
       allow="autoplay; encrypted-media"
       allowfullscreen>
     </iframe>
   </div>
 
   <script>
+    // --- Entrainment Parameters ---
     const frequencyHz = 6.9;
-    const intervalMs = 1000 / frequencyHz;
+    const flickerIntervalMs = 1000 / frequencyHz; 
+    
+    // --- Timing and Brightness Constants (8s flicker, 6s bright hold) ---
+    const flickerDurationMs = 8000;      // 8 seconds of flicker
+    
+    // --- Brightness Levels ---
+    const baseBrightness = 0.98;         // Base level for the 6.9 Hz flicker
+    const flickerRange = 0.04;           // Flicker will oscillate between 0.96 and 1.00
+    const fractionationPeak = 1.0;       // Full brightness (1.0) for the 'alert' phase
 
-    let bright = true;
-    setInterval(() => {
-      document.body.style.filter = bright ? 'brightness(1.02)' : 'brightness(0.96)';
-      bright = !bright;
-    }, intervalMs);
+    let flickerTimer;
+    let fractionationTimeout;
+    const body = document.body;
+
+    /**
+     * Toggles the brightness to create the 6.9 Hz flicker effect.
+     */
+    function startFlicker() {
+      // Set the CSS transition for *fast* changes during the flicker phase
+      body.style.transition = 'filter 0.05s ease-in-out'; 
+      let bright = true;
+      
+      flickerTimer = setInterval(() => {
+        body.style.filter = bright 
+          ? `brightness(${baseBrightness + flickerRange / 2})` 
+          : `brightness(${baseBrightness - flickerRange / 2})`;
+        bright = !bright;
+      }, flickerIntervalMs);
+    }
+
+    /**
+     * Executes the 'stop and brighten' phase (6 seconds total).
+     */
+    function runFractionationCycle() {
+      // 1. Stop the rapid flicker
+      clearInterval(flickerTimer);
+
+      // 2. Set the CSS transition for *slow* changes (2 seconds for a gentle fade)
+      body.style.transition = 'filter 2s ease-in-out'; 
+
+      // --- Brightening (2s fade up to full brightness) ---
+      body.style.filter = `brightness(${fractionationPeak})`; 
+
+      // Set a timeout for the duration of the full brightness hold (4 seconds total time)
+      fractionationTimeout = setTimeout(() => {
+        
+        // --- Dimming (2s fade down to base brightness) ---
+        body.style.filter = `brightness(${baseBrightness})`;
+        
+        // Wait for the fade-down (2 seconds) before restarting the loop
+        fractionationTimeout = setTimeout(loopControl, 2000); 
+
+      }, 4000); // 4 seconds: 2s fade up + 2s pure hold time. Total bright time is 6s.
+    }
+    
+    /**
+     * Controls the main loop: Flicker (8s) -> Fractionation (6s) -> Flicker...
+     */
+    function loopControl() {
+      clearTimeout(fractionationTimeout);
+      clearInterval(flickerTimer); 
+
+      // Start the 6.9 Hz flicker
+      startFlicker(); 
+
+      // Schedule the fractionation cycle to run after 8 seconds
+      fractionationTimeout = setTimeout(runFractionationCycle, flickerDurationMs); 
+    }
+
+    // Initialize the loop when the page loads
+    loopControl();
+
+    // OPTIONAL: Add a safety measure to reset on user click/interaction
+    document.addEventListener('click', loopControl); 
   </script>
 
 </body>
