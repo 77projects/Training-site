@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Theta Entrainment with Fractionation</title>
   <style>
     html, body {
@@ -10,59 +10,112 @@
       height: 100%;
       overflow: hidden;
       background-color: black;
-      /* Smooth transition for the *slow* changes during fractionation */
-      transition: filter 1s ease-in-out; 
+      transition: filter 1s ease-in-out; /* slow default */
     }
-
     .video-container {
       position: fixed;
-      top: 0; left: 0;
+      inset: 0;
       width: 100vw;
       height: 100vh;
       z-index: 0;
     }
-
     iframe {
       width: 100%;
       height: 100%;
       border: none;
     }
+    /* Optional: a tiny overlay for the first click */
+    .tap-to-start {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: rgba(0,0,0,0.25);
+      font-family: system-ui, sans-serif;
+      font-size: 1rem;
+      z-index: 1;
+      cursor: pointer;
+      user-select: none;
+    }
+    .tap-to-start.hidden { display: none; }
   </style>
 </head>
 <body>
 
+  <!-- Safety note: flicker can affect photosensitive users. -->
+  <div class="tap-to-start" id="tapStart">Tap or click to start (enables audio)</div>
+
   <div class="video-container">
-    <iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/QJV-qsyjV78?si=mUx69noCoJhSIsPW&amp;controls=0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <iframe
+      src="https://www.youtube-nocookie.com/embed/QJV-qsyjV78?si=mUx69noCoJhSIsPW&amp;controls=0"
+      title="YouTube video player"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+    ></iframe>
   </div>
+
+  <!-- ✨ Your cue audio (replace src with your file) -->
+  <audio id="pauseAudio" preload="auto" src="audiomass-output.mp3"></audio>
 
   <script>
     // --- Entrainment Parameters ---
-    const frequencyHz = 6.9; // Theta frequency for trance induction
-    const flickerIntervalMs = 1000 / frequencyHz; 
-    
-    // --- Timing Constants (8s flicker, 6s bright hold) ---
-    const flickerDurationMs = 8000;      // 8 seconds of flicker
-    
+    const frequencyHz = 6.9;                 // Theta-ish flicker frequency
+    const flickerIntervalMs = 1000 / frequencyHz;
+
+    // --- Timing Constants (8s flicker, 6s fractionation) ---
+    const flickerDurationMs = 8000;          // 8 seconds of flicker
+
     // --- Brightness Levels ---
-    const baseBrightness = 0.98;         // Base level for the 6.9 Hz flicker
-    const flickerRange = 0.04;           // Flicker will oscillate between 0.96 and 1.00
-    const fractionationPeak = 1.0;       // Full brightness (1.0) for the 'alert' phase
+    const baseBrightness = 0.98;             // Base level for the 6.9 Hz flicker
+    const flickerRange = 0.04;               // Flicker between ~0.96 and 1.00
+    const fractionationPeak = 1.0;           // Full brightness during "pause" phase
 
     let flickerTimer;
     let fractionationTimeout;
     const body = document.body;
 
+    // --- Audio handling ---
+    const audioEl = document.getElementById('pauseAudio');
+    audioEl.volume = 1.0;                    // Adjust as needed (0.0 - 1.0)
+    let audioUnlocked = false;
+
+    async function unlockAudio() {
+      if (audioUnlocked) return;
+      try {
+        // Prime playback to satisfy autoplay policies
+        audioEl.muted = true;
+        await audioEl.play();
+        audioEl.pause();
+        audioEl.currentTime = 0;
+        audioEl.muted = false;
+        audioUnlocked = true;
+      } catch (e) {
+        // If this throws, another user interaction will try again.
+      }
+    }
+
+    async function playAudioCue() {
+      if (!audioUnlocked) return; // wait until user gesture unlocks
+      try {
+        // If the sound is already playing, restart it for a consistent cue
+        audioEl.currentTime = 0;
+        await audioEl.play();
+      } catch (e) {
+        // Swallow errors (e.g., policy) to avoid breaking the loop
+      }
+    }
+
     /**
      * Toggles the brightness to create the 6.9 Hz flicker effect.
      */
     function startFlicker() {
-      // Set the CSS transition for *fast* changes during the flicker phase
-      body.style.transition = 'filter 0.05s ease-in-out'; 
+      body.style.transition = 'filter 0.05s ease-in-out'; // fast during flicker
       let bright = true;
-      
       flickerTimer = setInterval(() => {
-        body.style.filter = bright 
-          ? `brightness(${baseBrightness + flickerRange / 2})` 
+        body.style.filter = bright
+          ? `brightness(${baseBrightness + flickerRange / 2})`
           : `brightness(${baseBrightness - flickerRange / 2})`;
         bright = !bright;
       }, flickerIntervalMs);
@@ -70,49 +123,56 @@
 
     /**
      * Executes the 'stop and brighten' phase (6 seconds total fractionation).
+     * Timeline: 2s fade up -> 2s hold -> 2s fade down -> (play cue) -> back to flicker
      */
     function runFractionationCycle() {
-      // 1. Stop the rapid flicker
       clearInterval(flickerTimer);
 
-      // 2. Set the CSS transition for *slow* changes (2 seconds for a gentle fade)
-      body.style.transition = 'filter 2s ease-in-out'; 
+      // Slow fades during pause
+      body.style.transition = 'filter 2s ease-in-out';
 
-      // --- Brightening (2s fade up to full brightness) ---
-      body.style.filter = `brightness(${fractionationPeak})`; 
+      // Up (2s) + hold (2s)
+      body.style.filter = `brightness(${fractionationPeak})`;
 
-      // Set a timeout for the duration of the full brightness hold (4 seconds total time)
+      // After 4s total at peak, begin dim (2s)
       fractionationTimeout = setTimeout(() => {
-        
-        // --- Dimming (2s fade down to base brightness) ---
         body.style.filter = `brightness(${baseBrightness})`;
-        
-        // Wait for the fade-down (2 seconds) before restarting the loop
-        fractionationTimeout = setTimeout(loopControl, 2000); 
 
-      }, 4000); // 4 seconds (2s fade up + 2s pure hold). Total bright phase is 6s.
+        // After the 2s dim completes, play cue and resume flicker
+        fractionationTimeout = setTimeout(async () => {
+          await playAudioCue();  // 🔊 cue happens right after the "pause" ends
+          loopControl();         // resume flicker cycle
+        }, 2000);
+
+      }, 4000);
     }
-    
+
     /**
      * Controls the main loop: Flicker (8s) -> Fractionation (6s) -> Flicker...
      */
     function loopControl() {
       clearTimeout(fractionationTimeout);
-      clearInterval(flickerTimer); 
+      clearInterval(flickerTimer);
 
-      // Start the 6.9 Hz flicker
-      startFlicker(); 
-
-      // Schedule the fractionation cycle to run after 8 seconds
-      fractionationTimeout = setTimeout(runFractionationCycle, flickerDurationMs); 
+      startFlicker(); // 8s flicker, then fractionation
+      fractionationTimeout = setTimeout(runFractionationCycle, flickerDurationMs);
     }
 
-    // Initialize the loop when the page loads
+    // Start loop immediately; audio will engage after first click
     loopControl();
 
-    // OPTIONAL: Add a safety measure to reset on user click/interaction
-    document.addEventListener('click', loopControl); 
+    // User interaction: unlock audio + optionally restart loop (keeps your old behavior)
+    const tap = document.getElementById('tapStart');
+    const onFirstClick = async () => {
+      await unlockAudio();
+      tap.classList.add('hidden');
+      loopControl();
+    };
+    tap.addEventListener('click', onFirstClick, { once: true });
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
   </script>
 
 </body>
 </html>
+
