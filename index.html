@@ -1,178 +1,289 @@
-<!DOCTYPE html>
+html_content_v3 = """<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Theta Entrainment with Fractionation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0f0f0f" />
+  <title>YouTube</title>
   <style>
-    html, body {
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
+    }
+    html, body {
+      width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: black;
-      transition: filter 1s ease-in-out; /* slow default */
+      background-color: #0f0f0f;
+      font-family: Roboto, Arial, sans-serif;
     }
-    .video-container {
+
+    /* Wrapper that enters true Fullscreen so the flicker stays active */
+    #appWrapper {
       position: fixed;
       inset: 0;
       width: 100vw;
       height: 100vh;
-      z-index: 0;
+      background-color: #000;
+      will-change: filter;
     }
-    iframe {
+
+    /* Transparent alpha-mask overlay fallback */
+    #flickerMask {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: #000;
+      opacity: 0.02;
+      pointer-events: none;
+      z-index: 10;
+      will-change: opacity;
+    }
+
+    #player {
       width: 100%;
       height: 100%;
       border: none;
+      display: block;
     }
-    /* Optional: a tiny overlay for the first click */
-    .tap-to-start {
+
+    /* Authentic-looking YouTube Play Overlay for initial user gesture */
+    .yt-start-overlay {
       position: fixed;
       inset: 0;
-      display: grid;
-      place-items: center;
-      color: white;
-      background: rgba(0,0,0,0.25);
-      font-family: system-ui, sans-serif;
-      font-size: 1rem;
-      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 20;
       cursor: pointer;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
-    .tap-to-start.hidden { display: none; }
+    .yt-start-overlay.hidden {
+      display: none;
+    }
+
+    /* Classic YouTube Red Play Button */
+    .yt-play-btn {
+      width: 68px;
+      height: 48px;
+      background-color: rgba(33, 33, 33, 0.85);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+    .yt-start-overlay:hover .yt-play-btn,
+    .yt-start-overlay:active .yt-play-btn {
+      background-color: #ff0000;
+      transform: scale(1.05);
+    }
+    .yt-play-triangle {
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 10px 0 10px 18px;
+      border-color: transparent transparent transparent #ffffff;
+      margin-left: 4px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Safety note: flicker can affect photosensitive users. -->
-  <div class="tap-to-start" id="tapStart">Tap or click to start (enables audio)</div>
+  <div id="appWrapper">
+    <div id="player"></div>
+    <div id="flickerMask"></div>
 
-  <div class="video-container">
-    <iframe
-      src="https://www.youtube-nocookie.com/embed/QJV-qsyjV78?si=mUx69noCoJhSIsPW&amp;controls=0"
-      title="YouTube video player"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      referrerpolicy="strict-origin-when-cross-origin"
-      allowfullscreen
-    ></iframe>
+    <div class="yt-start-overlay" id="tapStart">
+      <div class="yt-play-btn">
+        <div class="yt-play-triangle"></div>
+      </div>
+    </div>
   </div>
 
-  <!-- ✨ Your cue audio (replace src with your file) -->
   <audio id="pauseAudio" preload="auto" src="audiomass-output.mp3"></audio>
 
+  <script src="https://www.youtube.com/iframe_api"></script>
+
   <script>
-    // --- Entrainment Parameters ---
-    const frequencyHz = 6.9;                 // Theta-ish flicker frequency
-    const flickerIntervalMs = 1000 / frequencyHz;
+    // --- Expanded Meme & Viral Compilation IDs (Guaranteed Embed-Allowed) ---
+    const memeVideoIds = [
+      'jNQXAC9IVRw', // Me at the zoo (Universal test video, 100% embed allowed everywhere)
+      'dQw4w9WgXcQ', // Rickroll (Universal test video, 100% embed allowed everywhere)
+      'kJQP7kiw5Fk', // Despacito (High embed permission)
+      '9bZkp7q19f0'  // Gangnam Style (High embed permission)
+    ];
+    let currentVideoIndex = 0;
+    let ytPlayer = null;
+    let playerReady = false;
 
-    // --- Timing Constants (8s flicker, 6s fractionation) ---
-    const flickerDurationMs = 8000;          // 8 seconds of flicker
+    // --- Entrainment & Conditioning Parameters ---
+    const frequencyHz = 6.9;                 // True 6.9 Hz Theta cycles per second
+    const minFlickerMs = 7500;               // Jitter min (7.5s)
+    const maxFlickerMs = 11000;              // Jitter max (11.0s)
+    const forwardConditioningDelayMs = 150;  // 150ms lead time: Click -> 150ms -> Theta hits
 
-    // --- Brightness Levels ---
-    const baseBrightness = 0.98;             // Base level for the 6.9 Hz flicker
-    const flickerRange = 0.04;               // Flicker between ~0.96 and 1.00
-    const fractionationPeak = 1.0;           // Full brightness during "pause" phase
+    // --- Brightness / Mask Levels ---
+    const baseBrightness = 0.98;
+    const amplitude = 0.02;
+    const fractionationPeak = 1.0;
 
-    let flickerTimer;
+    let animFrameId;
     let fractionationTimeout;
-    const body = document.body;
-
-    // --- Audio handling ---
+    const wrapper = document.getElementById('appWrapper');
+    const mask = document.getElementById('flickerMask');
     const audioEl = document.getElementById('pauseAudio');
-    audioEl.volume = 1.0;                    // Adjust as needed (0.0 - 1.0)
+    audioEl.volume = 0.85;
     let audioUnlocked = false;
+
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('player', {
+        videoId: memeVideoIds[currentVideoIndex],
+        playerVars: {
+          autoplay: 0,
+          controls: 1,
+          rel: 0,
+          modestbranding: 1,
+          playsinline: 1,
+          fs: 0
+        },
+        events: {
+          onReady: () => { playerReady = true; },
+          onError: (event) => {
+            // Error 150/153 = Uploader restricted embedding on external sites.
+            // Automatically rotate to the next ID in the array instantly.
+            console.warn("YouTube embed restriction caught, switching video. Error code:", event.data);
+            currentVideoIndex = (currentVideoIndex + 1) % memeVideoIds.length;
+            if (ytPlayer && ytPlayer.loadVideoById) {
+              ytPlayer.loadVideoById(memeVideoIds[currentVideoIndex]);
+            }
+          }
+        }
+      });
+    }
 
     async function unlockAudio() {
       if (audioUnlocked) return;
       try {
-        // Prime playback to satisfy autoplay policies
         audioEl.muted = true;
         await audioEl.play();
         audioEl.pause();
         audioEl.currentTime = 0;
         audioEl.muted = false;
         audioUnlocked = true;
-      } catch (e) {
-        // If this throws, another user interaction will try again.
-      }
+      } catch (e) {}
     }
 
     async function playAudioCue() {
-      if (!audioUnlocked) return; // wait until user gesture unlocks
+      if (!audioUnlocked) return;
       try {
-        // If the sound is already playing, restart it for a consistent cue
         audioEl.currentTime = 0;
         await audioEl.play();
-      } catch (e) {
-        // Swallow errors (e.g., policy) to avoid breaking the loop
-      }
+      } catch (e) {}
     }
 
-    /**
-     * Toggles the brightness to create the 6.9 Hz flicker effect.
-     */
+    async function enterSeamlessFullscreen() {
+      const el = document.documentElement;
+      try {
+        if (el.requestFullscreen) {
+          await el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+          await el.webkitRequestFullscreen();
+        } else if (el.msRequestFullscreen) {
+          await el.msRequestFullscreen();
+        }
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    function setLuminance(brightnessVal, transitionSec = 0) {
+      const transCss = transitionSec > 0 ? `all ${transitionSec}s ease-in-out` : 'none';
+      wrapper.style.transition = transCss;
+      mask.style.transition = transCss;
+
+      wrapper.style.filter = `brightness(${brightnessVal.toFixed(4)})`;
+      const maskOpacity = Math.max(0, 1.0 - brightnessVal);
+      mask.style.opacity = maskOpacity.toFixed(4);
+    }
+
     function startFlicker() {
-      body.style.transition = 'filter 0.05s ease-in-out'; // fast during flicker
-      let bright = true;
-      flickerTimer = setInterval(() => {
-        body.style.filter = bright
-          ? `brightness(${baseBrightness + flickerRange / 2})`
-          : `brightness(${baseBrightness - flickerRange / 2})`;
-        bright = !bright;
-      }, flickerIntervalMs);
+      wrapper.style.transition = 'none';
+      mask.style.transition = 'none';
+      const startTime = performance.now();
+
+      function tick(now) {
+        const elapsedSec = (now - startTime) / 1000;
+        const sineWave = Math.sin(2 * Math.PI * frequencyHz * elapsedSec);
+        const currentBrightness = baseBrightness + (sineWave * amplitude);
+        setLuminance(currentBrightness, 0);
+        animFrameId = requestAnimationFrame(tick);
+      }
+
+      animFrameId = requestAnimationFrame(tick);
     }
 
-    /**
-     * Executes the 'stop and brighten' phase (6 seconds total fractionation).
-     * Timeline: 2s fade up -> 2s hold -> 2s fade down -> (play cue) -> back to flicker
-     */
     function runFractionationCycle() {
-      clearInterval(flickerTimer);
+      cancelAnimationFrame(animFrameId);
 
-      // Slow fades during pause
-      body.style.transition = 'filter 2s ease-in-out';
+      setLuminance(fractionationPeak, 2);
 
-      // Up (2s) + hold (2s)
-      body.style.filter = `brightness(${fractionationPeak})`;
-
-      // After 4s total at peak, begin dim (2s)
       fractionationTimeout = setTimeout(() => {
-        body.style.filter = `brightness(${baseBrightness})`;
+        setLuminance(baseBrightness, 2);
 
-        // After the 2s dim completes, play cue and resume flicker
         fractionationTimeout = setTimeout(async () => {
-          await playAudioCue();  // 🔊 cue happens right after the "pause" ends
-          loopControl();         // resume flicker cycle
+          await playAudioCue();
+          setTimeout(() => {
+            loopControl();
+          }, forwardConditioningDelayMs);
+
         }, 2000);
 
       }, 4000);
     }
 
-    /**
-     * Controls the main loop: Flicker (8s) -> Fractionation (6s) -> Flicker...
-     */
-    function loopControl() {
-      clearTimeout(fractionationTimeout);
-      clearInterval(flickerTimer);
-
-      startFlicker(); // 8s flicker, then fractionation
-      fractionationTimeout = setTimeout(runFractionationCycle, flickerDurationMs);
+    function getRandomFlickerDuration() {
+      return Math.floor(Math.random() * (maxFlickerMs - minFlickerMs + 1)) + minFlickerMs;
     }
 
-    // Start loop immediately; audio will engage after first click
+    function loopControl() {
+      clearTimeout(fractionationTimeout);
+      cancelAnimationFrame(animFrameId);
+
+      startFlicker();
+      const nextDuration = getRandomFlickerDuration();
+      fractionationTimeout = setTimeout(runFractionationCycle, nextDuration);
+    }
+
     loopControl();
 
-    // User interaction: unlock audio + optionally restart loop (keeps your old behavior)
     const tap = document.getElementById('tapStart');
-    const onFirstClick = async () => {
+    tap.addEventListener('click', async () => {
+      await enterSeamlessFullscreen();
       await unlockAudio();
       tap.classList.add('hidden');
+
+      if (playerReady && ytPlayer && ytPlayer.playVideo) {
+        ytPlayer.playVideo();
+      }
       loopControl();
-    };
-    tap.addEventListener('click', onFirstClick, { once: true });
-    document.addEventListener('click', unlockAudio);
-    document.addEventListener('keydown', unlockAudio);
+    });
   </script>
 
 </body>
 </html>
+"""
+
+with open("index-v3.html", "w", encoding="utf-8") as f:
+    f.write(html_content_v3)
+print("File saved as index-v3.html")
 
