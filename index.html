@@ -1,8 +1,9 @@
-html_content_v3 = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#0f0f0f" />
@@ -114,9 +115,9 @@ html_content_v3 = """<!DOCTYPE html>
   <script src="https://www.youtube.com/iframe_api"></script>
 
   <script>
-    // --- Expanded Meme & Viral Compilation IDs (Guaranteed Embed-Allowed) ---
-    const memeVideoIds = "CpR38VHczgPk-_BW"
-   
+    const memeVideoIds = [
+      'gSXm0f0HYpc'
+    ];
     let currentVideoIndex = 0;
     let ytPlayer = null;
     let playerReady = false;
@@ -149,17 +150,26 @@ html_content_v3 = """<!DOCTYPE html>
           rel: 0,
           modestbranding: 1,
           playsinline: 1,
-          fs: 0
+          fs: 0,
+          origin: window.location.origin,
+          widget_referrer: window.location.href
         },
         events: {
           onReady: () => { playerReady = true; },
           onError: (event) => {
-            // Error 150/153 = Uploader restricted embedding on external sites.
-            // Automatically rotate to the next ID in the array instantly.
-            console.warn("YouTube embed restriction caught, switching video. Error code:", event.data);
-            currentVideoIndex = (currentVideoIndex + 1) % memeVideoIds.length;
-            if (ytPlayer && ytPlayer.loadVideoById) {
+            const code = event.data;
+            if (code === 153) {
+              // Missing Referer: the page must be opened from an http(s) URL, not as a local file.
+              console.error("Error 153: page must be served over http(s) with a Referer header.");
+              return;
+            }
+            // 100 = removed/private, 101/150 = embedding disabled by the uploader.
+            // Only rotate if there is another video to try.
+            if ([100, 101, 150].includes(code) && memeVideoIds.length > 1) {
+              currentVideoIndex = (currentVideoIndex + 1) % memeVideoIds.length;
               ytPlayer.loadVideoById(memeVideoIds[currentVideoIndex]);
+            } else {
+              console.error("YouTube player error:", code);
             }
           }
         }
@@ -277,9 +287,3 @@ html_content_v3 = """<!DOCTYPE html>
 
 </body>
 </html>
-"""
-
-with open("index-v3.html", "w", encoding="utf-8") as f:
-    f.write(html_content_v3)
-print("File saved as index-v3.html")
-
